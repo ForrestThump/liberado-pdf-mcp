@@ -1,0 +1,17 @@
+[package]
+name = "mcp-pdf-stirling"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+mcp-pdf-core = { path = "../mcp-pdf-core" }
+reqwest.workspace = true
+base64.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

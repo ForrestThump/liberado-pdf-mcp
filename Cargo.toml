@@ -1,0 +1,31 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/mcp-pdf-core",
+    "crates/mcp-pdf-native",
+    "crates/mcp-pdf-stirling",
+    "crates/mcp-pdf-server",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/ForrestThump/liberado-pdf-mcp"
+rust-version = "1.89"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+base64 = "0.22"
+thiserror = "2"
+tracing = "0.1"
+lopdf = "0.40"
+glob = "0.3"
+strsim = "0.11"
+reqwest = { version = "0.12", features = ["multipart", "json"], default-features = false }
+turbomcp = { version = "3.1.4", features = ["stdio"] }
+
+[workspace.metadata.cargo-machete]
+ignored = ["tokio"]

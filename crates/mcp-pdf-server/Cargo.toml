@@ -1,0 +1,38 @@
+[package]
+name = "mcp-pdf-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "mcp-pdf-rs"
+path = "src/main.rs"
+
+[features]
+default = ["native", "stdio", "http"]
+native = ["mcp-pdf-native"]
+stirling-bridge = ["mcp-pdf-stirling"]
+stdio = ["turbomcp/stdio"]
+http = ["turbomcp/http"]
+
+[build-dependencies]
+vergen = { version = "8.3.0", features = ["build", "cargo", "git", "gitcl", "rustc"] }
+
+[dependencies]
+turbomcp.workspace = true
+mcp-pdf-core = { path = "../mcp-pdf-core" }
+mcp-pdf-native = { path = "../mcp-pdf-native", optional = true }
+mcp-pdf-stirling = { path = "../mcp-pdf-stirling", optional = true }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+lopdf.workspace = true
+base64.workspace = true
+mcp-pdf-native = { path = "../mcp-pdf-native", features = ["test-utils"] }
+serial_test = "3"

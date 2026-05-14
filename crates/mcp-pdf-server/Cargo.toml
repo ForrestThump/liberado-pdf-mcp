@@ -7,12 +7,13 @@ repository.workspace = true
 rust-version.workspace = true
 
 [[bin]]
-name = "mcp-pdf-rs"
+name = "liberado-pdf-mcp"
 path = "src/main.rs"
 
 [features]
 default = ["native", "stdio", "http"]
 native = ["mcp-pdf-native"]
+native-ocr = ["mcp-pdf-native/native-ocr"]
 stirling-bridge = ["mcp-pdf-stirling"]
 stdio = ["turbomcp/stdio"]
 http = ["turbomcp/http"]

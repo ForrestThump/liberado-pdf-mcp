@@ -13,7 +13,15 @@ async fn main() {
     let config = ServerConfig::from_env();
     let transport_cfg = config.transport.clone();
 
-    let builder = PdfServer { config }.builder();
+    // Allow fallback when client sends an older protocol version (e.g. 2024-11-05)
+    let protocol = ProtocolConfig {
+        allow_fallback: true,
+        ..Default::default()
+    };
+
+    let builder = PdfServer { config }
+        .builder()
+        .with_protocol(protocol);
 
     let builder = match transport_cfg {
         TransportConfig::Stdio => {
@@ -23,7 +31,11 @@ async fn main() {
             let addr = format!("{host}:{port}");
             #[cfg(feature = "http")]
             {
-                builder.transport(turbomcp::Transport::http(addr))
+                // Backend MCP clients don't send Origin headers, so disable
+                // origin validation on the isolated Docker network.
+                builder
+                    .transport(turbomcp::Transport::http(addr))
+                    .allow_any_origin(true)
             }
             #[cfg(not(feature = "http"))]
             {

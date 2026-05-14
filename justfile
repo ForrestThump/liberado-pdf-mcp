@@ -1,21 +1,32 @@
-# mcp-pdf-rs development recipes
+# liberado-pdf-mcp development recipes
 # Install just: https://github.com/casey/just
+
+DOCKER_TAG := "liberado-pdf-mcp"
 
 # Default target
 default:
     @just --list
 
-# Build release binary (native + HTTP, ~10–15 MB)
+# Build the Docker image (always builds with GLIBC 2.36 for compat)
 build:
-    cargo build --release --bin mcp-pdf-rs
-
-# Build minimal: native + stdio only, no HTTP/TLS deps (~6–10 MB)
-build-minimal:
-    cargo build --release --bin mcp-pdf-rs --no-default-features --features native,stdio
+    docker build -t {{DOCKER_TAG}} .
 
 # Build with Stirling bridge (adds OCR/watermark/image tools)
 build-stirling:
-    cargo build --release --bin mcp-pdf-rs --features stirling-bridge
+    docker build --build-arg FEATURES="stirling-bridge" -t {{DOCKER_TAG}}:stirling .
+
+# Extract the binary from the Docker image to the given output path
+# Usage: just extract-bin [output-path]
+extract-bin output="liberado-pdf-mcp":
+    docker create --name tmp-liberado {{DOCKER_TAG}}
+    docker cp tmp-liberado:/usr/local/bin/liberado-pdf-mcp {{output}}
+    docker rm tmp-liberado > /dev/null
+    chmod +x {{output}}
+
+# Extract the binary directly into custom-bin for OpenClaw stdio
+install-bin:
+    docker build -t {{DOCKER_TAG}} .
+    @just extract-bin ../../volumes/openclaw/custom-bin/liberado-pdf-mcp
 
 # Check compilation
 check:
@@ -53,14 +64,6 @@ fix:
 ci: test lint
     cargo test --features stirling-bridge
     cargo clippy --all-targets --features stirling-bridge -- -D warnings
-
-# Build Docker image
-docker-build:
-    docker build -t mcp-pdf-rs .
-
-# Build Docker image with Stirling bridge
-docker-build-stirling:
-    docker build --build-arg FEATURES="stirling-bridge" -t mcp-pdf-rs:stirling .
 
 # Clean build artifacts
 clean:

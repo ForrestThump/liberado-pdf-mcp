@@ -26,6 +26,7 @@ glob = "0.3"
 strsim = "0.11"
 reqwest = { version = "0.12", features = ["multipart", "json"], default-features = false }
 turbomcp = { version = "3.1.4", features = ["stdio"] }
+image = "0.25"
 
 [workspace.metadata.cargo-machete]
 ignored = ["tokio"]

@@ -8,6 +8,7 @@ rust-version.workspace = true
 
 [features]
 test-utils = []
+native-ocr = ["dep:kreuzberg-tesseract", "dep:image"]
 
 [dependencies]
 mcp-pdf-core = { path = "../mcp-pdf-core" }
@@ -20,3 +21,5 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+image = { workspace = true, optional = true }
+kreuzberg-tesseract = { version = "4", optional = true }

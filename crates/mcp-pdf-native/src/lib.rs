@@ -8,5 +8,8 @@ pub mod search;
 pub mod split;
 pub mod text;
 
+#[cfg(feature = "native-ocr")]
+pub mod ocr_native;
+
 #[cfg(any(test, feature = "test-utils"))]
 pub mod test_utils;

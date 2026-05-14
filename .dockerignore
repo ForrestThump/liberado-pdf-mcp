@@ -1,0 +1,9 @@
+target
+.git
+.gitignore
+.env
+.env.example
+justfile
+README.md
+LICENSE
+ARCHITECTURE.md

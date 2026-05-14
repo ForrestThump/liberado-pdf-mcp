@@ -12,7 +12,7 @@ pub struct PdfServer {
     pub config: ServerConfig,
 }
 
-#[server(name = "mcp-pdf-rs", version = "0.1.0")]
+#[server(name = "liberado-pdf-mcp", version = "0.1.0")]
 impl PdfServer {
     /// Merge multiple PDF files into a single PDF document.
     #[tool]
@@ -142,6 +142,8 @@ impl PdfServer {
     }
 
     /// Extract plain text from all pages of a PDF document.
+    /// NOTE: This only works for PDFs with a selectable text layer (digital PDFs).
+    /// For scanned/image-based PDFs (no selectable text), use ocr_pdf or ocr_pdf_native instead.
     #[tool]
     async fn extract_text(
         &self,
@@ -310,7 +312,8 @@ impl PdfServer {
 
     // ── Stirling Bridge Tools (available with stirling-bridge feature) ──
 
-    /// Perform OCR on a scanned PDF to make it searchable.
+    /// Perform OCR on a scanned/image-based PDF to make it searchable.
+    /// Returns a searchable PDF (not plain text). For text output, use ocr_pdf_native.
     /// Requires a Stirling PDF server (set STIRLING_PDF_URL).
     #[tool]
     async fn ocr_pdf(
@@ -350,7 +353,9 @@ impl PdfServer {
         add_watermark_impl(pdf_file, watermark_text, font_size, opacity, rotation).await
     }
 
-    /// Convert PDF pages to image files.
+    /// Convert PDF pages to image files for visual layout inspection.
+    /// CAUTION: Returns large base64 data URLs at default 300 DPI that may exceed LLM context windows.
+    /// For text extraction from scanned/image-based PDFs, use ocr_pdf or ocr_pdf_native instead.
     /// Requires a Stirling PDF server (set STIRLING_PDF_URL).
     #[tool]
     async fn convert_pdf_to_images(
@@ -359,7 +364,7 @@ impl PdfServer {
         pdf_file: String,
         #[description("Output image format: png, jpg, or gif")]
         image_format: Option<String>,
-        #[description("Output DPI (default: 300)")]
+        #[description("Output DPI (default: 300). Lower values reduce data URL size for LLM context.")]
         dpi: Option<u32>,
     ) -> McpResult<String> {
         convert_pdf_to_images_impl(pdf_file, image_format, dpi).await
@@ -378,6 +383,24 @@ impl PdfServer {
         color_type: Option<String>,
     ) -> McpResult<String> {
         convert_images_to_pdf_impl(image_files, fit_option, color_type).await
+    }
+
+    /// Perform OCR on a scanned/image-based PDF using the native Tesseract engine.
+    /// Extracts embedded images from each page and recognizes text server-side.
+    /// Returns only plain text (no base64 images) — safe for LLM context windows.
+    /// Best choice for extracting text from scanned documents or image-only PDFs.
+    /// For best results, pass the COMPLETE file as a data URL
+    /// (data:application/pdf;base64,...).
+    /// Build with --features native-ocr to enable this tool.
+    #[tool]
+    async fn ocr_pdf_native(
+        &self,
+        #[description("PDF file as a data: URL (data:application/pdf;base64,<base64>) or raw base64 string. Pass the COMPLETE unmodified file.")]
+        pdf_file: String,
+        #[description("Language code for OCR (default: 'eng')")]
+        language: Option<String>,
+    ) -> McpResult<String> {
+        ocr_pdf_native_impl(pdf_file, language).await
     }
 }
 
@@ -525,5 +548,28 @@ async fn convert_images_to_pdf_impl(
     _color_type: Option<String>,
 ) -> McpResult<String> {
     Err(McpError::configuration("Images-to-PDF conversion requires the stirling-bridge feature. Build with `--features stirling-bridge`."))
+}
+
+// ── Native OCR implementation ──
+
+#[cfg(feature = "native-ocr")]
+async fn ocr_pdf_native_impl(
+    pdf_file: String,
+    language: Option<String>,
+) -> McpResult<String> {
+    let input = parse_input(&pdf_file)?;
+    let lang = language.unwrap_or_else(|| "eng".to_string());
+    let result = native::ocr_native::ocr_pdf(input, &lang)
+        .await
+        .map_err(|e| map_tool_err("ocr_pdf_native", e))?;
+    Ok(result)
+}
+
+#[cfg(not(feature = "native-ocr"))]
+async fn ocr_pdf_native_impl(
+    _pdf_file: String,
+    _language: Option<String>,
+) -> McpResult<String> {
+    Err(McpError::configuration("Native OCR requires the native-ocr feature. Build with `--features native-ocr`."))
 }
 
